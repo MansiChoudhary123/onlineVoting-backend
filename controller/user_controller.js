@@ -1,7 +1,8 @@
-const model = require("../model");
-
-const User = model.User;
-const Candidate = model.Candidate;
+const User = require("../Models/VoterSchema");
+const Election = require("../Models/ElectionSchema"); // Your Mongoose Election model
+const Admin = require("../Models/AdminSchema"); // Your Mongoose Voter model
+const Vote = require("../Models/VoteSchema");
+const Candidate = require("../Models/CandidateSchema");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -9,15 +10,11 @@ const bcrypt = require("bcrypt");
 exports.createUser = async (req, res) => {
   try {
     console.log("hello");
-    const { name, email, phone, age, password } = req.body;
-
-    // Generate a JWT token
+    const { full_name, email, phone_number, age, password } = req.body;
     const token = jwt.sign({ email: req.body.email }, process.env.secretKey);
 
-    // Hash the user's password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if the email or phone already exists
     try {
       const emailExists = await User.findOne({ email: email }).exec();
       if (emailExists) {
@@ -29,23 +26,23 @@ exports.createUser = async (req, res) => {
       console.log(err);
     }
 
-    const phoneExists = await User.findOne({ phone: phone }).exec();
+    const phoneExists = await User.findOne({
+      phone_number: phone_number,
+    }).exec();
     if (phoneExists) {
       return res
         .status(400)
         .json({ message: "User with this phone number already exists" });
     }
 
-    // Create a new user instance
     const user = new User({
-      name: name,
+      full_name: full_name,
       email: email,
-      phone: phone,
+      phone_number: phone_number,
       age: age,
       password: hashedPassword,
     });
 
-    // Save the user to the database
     user
       .save()
       .then((result) => {
@@ -68,7 +65,6 @@ exports.createUser = async (req, res) => {
       .json({ message: "Internal server error", error: err });
   }
 };
-
 exports.loginUser = async (req, res) => {
   try {
     var email = req.body.email;
@@ -97,7 +93,6 @@ exports.getProfile = async (req, res) => {
   try {
     const email = req.params.email;
     console.log(email);
-    // Find the user based on the provided email
     const user = await User.findOne({ email: email }).exec();
 
     if (!user) {
@@ -117,14 +112,12 @@ exports.createCandidate = async (req, res) => {
   try {
     const { id, candidate_name, candidate_party } = req.body;
 
-    // Create a new candidate instance
     const newCandidate = new Candidate({
       id: id,
       candidate_name: candidate_name,
       candidate_party: candidate_party,
     });
 
-    // Save the candidate to the database
     const savedCandidate = await newCandidate.save();
 
     return res.status(201).json({
@@ -140,9 +133,7 @@ exports.createCandidate = async (req, res) => {
 };
 exports.getAllCandidates = async (req, res) => {
   try {
-    // Fetch all candidates from the database
     const candidates = await Candidate.find().exec();
-
     return res.status(200).json(candidates);
   } catch (error) {
     console.error(error);
@@ -154,9 +145,8 @@ exports.getAllCandidates = async (req, res) => {
 exports.voteCnadidate = async (req, res) => {
   try {
     const candidateId = req.params.candidateId;
-    const email = req.params.email; // Corrected parameter name
+    const email = req.params.email;
 
-    // Check if the user is allowed to vote
     var user = await User.findOne({ email: email }).exec();
     console.log(user);
     if (user.isVote) {
@@ -165,17 +155,14 @@ exports.voteCnadidate = async (req, res) => {
         .json({ message: "You are not allowed to vote again" });
     }
 
-    // Find the candidate and update their votes
     var candidate = await Candidate.findOne({ id: candidateId }).exec();
     if (!candidate) {
       return res.status(404).json({ message: "Candidate not found" });
     }
 
-    // Update the candidate's votes
     candidate.votes += 1;
     await candidate.save();
 
-    // Update the user's isVote field to true
     user.isVote = true;
     await user.save();
 
