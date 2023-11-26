@@ -5,7 +5,7 @@ const express = require("express");
 const server = express();
 const mongoose = require("mongoose");
 const routes = require("./routes");
-
+const router = require("./routes");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
@@ -34,8 +34,7 @@ const auth = (req, res, next) => {
 
 server.use(express.json());
 
-// Use the auth middleware for the /ballot route
-server.use("/ballot", routes.router);
+server.use("/ballot", router);
 
 // db connection
 const main = async () => {
