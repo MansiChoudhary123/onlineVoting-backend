@@ -8,7 +8,7 @@ const voterSchema = new Schema({
   phone_number: { type: String, required: true, maxlength: 20 },
   password: { type: String, required: true, maxlength: 128 },
   photo: { type: String },
-  participated_in: { type: Schema.Types.ObjectId, ref: "Election", null: true },
+  participated_in: [{ type: Schema.Types.ObjectId, ref: "Election" }],
 });
 
 const Voter = mongoose.model("Voter", voterSchema);
