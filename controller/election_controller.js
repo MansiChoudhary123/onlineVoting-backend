@@ -89,7 +89,7 @@ exports.getElectionViaAdmin = async (req, res) => {
 };
 exports.getELectionList = async (req, res) => {
   try {
-    const elections = await Election.find().select("-password");
+    const elections = await Election.find();
     res.status(200).json(elections);
   } catch (error) {
     res.status(500).json({ error: error.message });
