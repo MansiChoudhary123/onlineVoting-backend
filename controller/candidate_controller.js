@@ -90,11 +90,7 @@ exports.addVote = async (req, res) => {
       return res.status(404).json({ error: "Voter not found" });
     }
 
-    const existingVote = await Voter.findOne({
-      _id: voter._id,
-      participated_in: election,
-    });
-    if (existingVote) {
+    if (voter.participated_in.includes(election)) {
       return res
         .status(400)
         .json({ error: "You have already participated in this election" });
@@ -103,7 +99,7 @@ exports.addVote = async (req, res) => {
     const newVote = new Vote(req.body);
     await newVote.save();
 
-    voter.participated_in = election;
+    voter.participated_in.push(election);
     await voter.save();
 
     res.status(201).json({ message: "Vote added successfully" });
@@ -111,6 +107,7 @@ exports.addVote = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getResultByElectionId = async (req, res) => {
   try {
     const electionId = req.params.election_id;
